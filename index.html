@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Song Request Form</title>
+  <script>
+    // Function to set a cookie for device identification
+    function setCookie(name, value, days) {
+      var expires = "";
+      if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
+      }
+      document.cookie = name + "=" + (value || "") + expires + "; path=/";
+    }
+
+    // Function to get a cookie value by name
+    function getCookie(name) {
+      var nameEQ = name + "=";
+      var ca = document.cookie.split(';');
+      for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+      }
+      return null;
+    }
+
+    // On page load, check if the user has submitted before (via cookie)
+    window.onload = function() {
+      var name = getCookie("karaokeName");
+      if (name) {
+        document.getElementById("name").value = name;
+      }
+    };
+
+    // On form submission, save the name in a cookie and send data to Google Sheets
+    async function submitForm() {
+      var name = document.getElementById("name").value;
+      var songName = document.getElementById("songName").value;
+      var artistName = document.getElementById("artistName").value;
+      var bgVocals = document.getElementById("bgVocals").checked;
+
+      setCookie("karaokeName", name, 365); // Save the name for 1 year
+
+      // Prepare the data to be sent
+      var data = {
+        name: name,
+        songName: songName,
+        artistName: artistName,
+        bgVocals: bgVocals ? "on" : "off" // Send "on" if checked, otherwise "off"
+      };
+
+      // Send data to Google Apps Script
+      const response = await fetch('https://script.google.com/macros/s/AKfycbxrdiVlmuJtrsU8dcePmsKVROjpOa1YO7Eyy7ffQlJNxZUYs2WAvg9_boVez1ZJCwGg/exec', { // Replace with your new Web App URL
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (response.ok) {
+        // Hide form and display thank you message
+        document.getElementById("songRequestForm").style.display = "none";
+        document.getElementById("thankYouMessage").style.display = "block";
+      } else {
+        alert('Error submitting request. Please try again.');
+      }
+    }
+  </script>
+  <style>
+    #thankYouMessage {
+      display: none;
+      margin-top: 20px;
+      font-size: 1.5em;
+      color: #4CAF50;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Song Request Form</h2>
+  <form id="songRequestForm" onsubmit="submitForm(); return false;">
+    <label for="name">Name:</label><br>
+    <input type="text" id="name" name="name" required><br><br>
+
+    <label for="songName">Song Name:</label><br>
+    <input type="text" id="songName" name="songName" required><br><br>
+
+    <label for="artistName">Artist Name:</label><br>
+    <input type="text" id="artistName" name="artistName" required><br><br>
+
+    <label for="bgVocals">With Background Vocals?</label><br>
+    <input type="checkbox" id="bgVocals" name="bgVocals"><br><br>
+
+    <input type="submit" value="Submit">
+    <button type="button" onclick="document.getElementById('songRequestForm').reset();">Submit Another Song</button>
+  </form>
+
+  <!-- Hidden Thank You Message -->
+  <div id="thankYouMessage">
+    Song Locked! Time to rock! . . . <br>
+    Isn’t it déjà vu all over again? 🎤🎶
+  </div>
+
+</body>
+</html>
